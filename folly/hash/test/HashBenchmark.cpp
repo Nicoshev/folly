@@ -16,6 +16,7 @@
 
 #include <folly/hash/Hash.h>
 #include <folly/hash/MurmurHash.h>
+#include <folly/hash/rapidhash.h>
 
 #include <stdint.h>
 
@@ -111,6 +112,13 @@ struct MurmurHash {
   }
 };
 
+struct RapidHash {
+  uint64_t operator()(const uint8_t* data, size_t size) const {
+    return folly::hash::rapidhash(
+        reinterpret_cast<const void*>(data), size);
+  }
+};
+
 } // namespace detail
 
 int main(int argc, char** argv) {
@@ -125,6 +133,7 @@ int main(int argc, char** argv) {
   BENCHMARK_HASH(SpookyHashV2);
   BENCHMARK_HASH(FNV64);
   BENCHMARK_HASH(MurmurHash);
+  BENCHMARK_HASH(RapidHash);
 
 #undef BENCHMARK_HASH
 
@@ -134,105 +143,137 @@ int main(int argc, char** argv) {
 }
 
 #if 0
-Intel(R) Xeon(R) Gold 6138 CPU @ 2.00GHz
+AMD Ryzen 9 5900X CPU @ 4.65GHz
 $ hash_benchmark --bm_min_usec=100000
 ============================================================================
 fbcode/folly/hash/test/HashBenchmark.cpp     relative  time/iter   iters/s
 ============================================================================
-SpookyHashV2: k=1                                           7.36ns   135.94M
-SpookyHashV2: k=2                                           7.47ns   133.91M
-SpookyHashV2: k=3                                           7.74ns   129.16M
-SpookyHashV2: k=4                                           7.14ns   140.06M
-SpookyHashV2: k=5                                           7.52ns   133.05M
-SpookyHashV2: k=6                                           7.84ns   127.58M
-SpookyHashV2: k=7                                           8.11ns   123.34M
-SpookyHashV2: k=8                                           7.24ns   138.09M
-SpookyHashV2: k=9                                           7.32ns   136.57M
-SpookyHashV2: k=10                                          7.62ns   131.27M
-SpookyHashV2: k=11                                          7.84ns   127.58M
-SpookyHashV2: k=12                                          8.07ns   123.90M
-SpookyHashV2: k=13                                          7.85ns   127.40M
-SpookyHashV2: k=14                                          8.02ns   124.76M
-SpookyHashV2: k=15                                          8.24ns   121.42M
-SpookyHashV2: k=2^0                                         7.18ns   139.28M
-SpookyHashV2: k=2^1                                         7.65ns   130.68M
-SpookyHashV2: k=2^2                                         7.24ns   138.16M
-SpookyHashV2: k=2^3                                         7.40ns   135.15M
-SpookyHashV2: k=2^4                                        13.91ns    71.91M
-SpookyHashV2: k=2^5                                        14.06ns    71.11M
-SpookyHashV2: k=2^6                                        21.83ns    45.81M
-SpookyHashV2: k=2^7                                        37.35ns    26.77M
-SpookyHashV2: k=2^8                                        47.34ns    21.12M
-SpookyHashV2: k=2^9                                        65.66ns    15.23M
-SpookyHashV2: k=2^10                                       99.14ns    10.09M
-SpookyHashV2: k=2^11                                      172.31ns     5.80M
-SpookyHashV2: k=2^12                                      314.87ns     3.18M
-SpookyHashV2: k=2^13                                      596.77ns     1.68M
-SpookyHashV2: k=2^14                                        1.16us   860.42K
-SpookyHashV2: k=2^15                                        2.33us   428.39K
+SpookyHashV2: k=1                                           5.13ns   195.06M
+SpookyHashV2: k=2                                           5.35ns   187.06M
+SpookyHashV2: k=3                                           5.37ns   186.26M
+SpookyHashV2: k=4                                           5.14ns   194.62M
+SpookyHashV2: k=5                                           5.36ns   186.53M
+SpookyHashV2: k=6                                           5.38ns   185.95M
+SpookyHashV2: k=7                                           5.58ns   179.15M
+SpookyHashV2: k=8                                           5.16ns   193.94M
+SpookyHashV2: k=9                                           5.17ns   193.57M
+SpookyHashV2: k=10                                          5.37ns   186.07M
+SpookyHashV2: k=11                                          5.39ns   185.42M
+SpookyHashV2: k=12                                          5.17ns   193.40M
+SpookyHashV2: k=13                                          5.38ns   185.90M
+SpookyHashV2: k=14                                          5.39ns   185.49M
+SpookyHashV2: k=15                                          5.59ns   178.82M
+SpookyHashV2: k=2^0                                         5.16ns   193.88M
+SpookyHashV2: k=2^1                                         5.38ns   186.04M
+SpookyHashV2: k=2^2                                         5.16ns   193.81M
+SpookyHashV2: k=2^3                                         5.17ns   193.58M
+SpookyHashV2: k=2^4                                         8.11ns   123.31M
+SpookyHashV2: k=2^5                                         8.36ns   119.67M
+SpookyHashV2: k=2^6                                        13.29ns    75.27M
+SpookyHashV2: k=2^7                                        22.36ns    44.73M
+SpookyHashV2: k=2^8                                        38.10ns    26.25M
+SpookyHashV2: k=2^9                                        49.01ns    20.41M
+SpookyHashV2: k=2^10                                       70.40ns    14.21M
+SpookyHashV2: k=2^11                                      114.81ns     8.71M
+SpookyHashV2: k=2^12                                      202.86ns     4.93M
+SpookyHashV2: k=2^13                                      379.74ns     2.63M
+SpookyHashV2: k=2^14                                      735.19ns     1.36M
+SpookyHashV2: k=2^15                                        1.44us   692.20K
 ----------------------------------------------------------------------------
-FNV64: k=1                                                  1.67ns   597.73M
-FNV64: k=2                                                  2.16ns   463.65M
-FNV64: k=3                                                  2.98ns   335.84M
-FNV64: k=4                                                  3.34ns   299.81M
-FNV64: k=5                                                  3.94ns   253.49M
-FNV64: k=6                                                  4.50ns   222.04M
-FNV64: k=7                                                  5.10ns   196.27M
-FNV64: k=8                                                  4.29ns   233.13M
-FNV64: k=9                                                  5.16ns   193.88M
-FNV64: k=10                                                 5.70ns   175.35M
-FNV64: k=11                                                 6.28ns   159.25M
-FNV64: k=12                                                 7.32ns   136.54M
-FNV64: k=13                                                 8.01ns   124.80M
-FNV64: k=14                                                 8.80ns   113.60M
-FNV64: k=15                                                 9.42ns   106.17M
-FNV64: k=2^0                                                1.66ns   600.75M
-FNV64: k=2^1                                                2.21ns   452.85M
-FNV64: k=2^2                                                3.40ns   294.24M
-FNV64: k=2^3                                                4.33ns   231.13M
-FNV64: k=2^4                                                9.42ns   106.15M
-FNV64: k=2^5                                               22.39ns    44.66M
-FNV64: k=2^6                                               50.47ns    19.81M
-FNV64: k=2^7                                              127.87ns     7.82M
-FNV64: k=2^8                                              279.80ns     3.57M
-FNV64: k=2^9                                              589.47ns     1.70M
-FNV64: k=2^10                                               1.22us   817.45K
-FNV64: k=2^11                                               2.46us   406.98K
-FNV64: k=2^12                                               4.92us   203.27K
-FNV64: k=2^13                                               9.84us   101.61K
-FNV64: k=2^14                                              19.66us    50.85K
-FNV64: k=2^15                                              39.65us    25.22K
+FNV64: k=1                                                  1.17ns   856.15M
+FNV64: k=2                                                  1.92ns   521.10M
+FNV64: k=3                                                  2.82ns   355.12M
+FNV64: k=4                                                  3.81ns   262.36M
+FNV64: k=5                                                  4.73ns   211.58M
+FNV64: k=6                                                  5.88ns   170.07M
+FNV64: k=7                                                  7.11ns   140.61M
+FNV64: k=8                                                  8.07ns   123.99M
+FNV64: k=9                                                  9.54ns   104.83M
+FNV64: k=10                                                10.98ns    91.09M
+FNV64: k=11                                                12.48ns    80.10M
+FNV64: k=12                                                13.45ns    74.37M
+FNV64: k=13                                                14.40ns    69.47M
+FNV64: k=14                                                15.88ns    62.98M
+FNV64: k=15                                                17.37ns    57.56M
+FNV64: k=2^0                                                1.17ns   854.73M
+FNV64: k=2^1                                                1.92ns   520.85M
+FNV64: k=2^2                                                3.81ns   262.24M
+FNV64: k=2^3                                                8.08ns   123.83M
+FNV64: k=2^4                                               19.03ns    52.54M
+FNV64: k=2^5                                               42.42ns    23.58M
+FNV64: k=2^6                                               89.76ns    11.14M
+FNV64: k=2^7                                              186.25ns     5.37M
+FNV64: k=2^8                                              375.03ns     2.67M
+FNV64: k=2^9                                              752.83ns     1.33M
+FNV64: k=2^10                                               1.51us   662.80K
+FNV64: k=2^11                                               3.02us   331.01K
+FNV64: k=2^12                                               6.04us   165.44K
+FNV64: k=2^13                                              12.09us    82.70K
+FNV64: k=2^14                                              24.19us    41.34K
+FNV64: k=2^15                                              48.38us    20.67K
 ----------------------------------------------------------------------------
-MurmurHash: k=1                                             1.92ns   520.45M
-MurmurHash: k=2                                             2.22ns   451.21M
-MurmurHash: k=3                                             2.28ns   437.75M
-MurmurHash: k=4                                             1.98ns   504.77M
-MurmurHash: k=5                                             2.18ns   458.61M
-MurmurHash: k=6                                             2.46ns   406.96M
-MurmurHash: k=7                                             2.52ns   396.89M
-MurmurHash: k=8                                             2.84ns   352.24M
-MurmurHash: k=9                                             3.63ns   275.50M
-MurmurHash: k=10                                            3.88ns   257.82M
-MurmurHash: k=11                                            4.03ns   248.11M
-MurmurHash: k=12                                            3.72ns   268.52M
-MurmurHash: k=13                                            3.91ns   255.67M
-MurmurHash: k=14                                            4.20ns   238.10M
-MurmurHash: k=15                                            4.41ns   226.70M
-MurmurHash: k=2^0                                           1.87ns   533.86M
-MurmurHash: k=2^1                                           2.17ns   460.14M
-MurmurHash: k=2^2                                           1.96ns   510.29M
-MurmurHash: k=2^3                                           2.78ns   359.29M
-MurmurHash: k=2^4                                           3.84ns   260.18M
-MurmurHash: k=2^5                                           5.22ns   191.49M
-MurmurHash: k=2^6                                           8.99ns   111.18M
-MurmurHash: k=2^7                                          17.05ns    58.63M
-MurmurHash: k=2^8                                          32.43ns    30.84M
-MurmurHash: k=2^9                                          70.59ns    14.17M
-MurmurHash: k=2^10                                        147.21ns     6.79M
-MurmurHash: k=2^11                                        301.94ns     3.31M
-MurmurHash: k=2^12                                        614.43ns     1.63M
-MurmurHash: k=2^13                                          1.23us   810.19K
-MurmurHash: k=2^14                                          2.47us   405.39K
-MurmurHash: k=2^15                                          4.94us   202.32K
+MurmurHash: k=1                                             1.49ns   669.53M
+MurmurHash: k=2                                             1.50ns   668.14M
+MurmurHash: k=3                                             1.40ns   715.14M
+MurmurHash: k=4                                             1.49ns   669.40M
+MurmurHash: k=5                                             1.41ns   710.20M
+MurmurHash: k=6                                             1.51ns   662.78M
+MurmurHash: k=7                                             1.44ns   694.43M
+MurmurHash: k=8                                             1.79ns   559.74M
+MurmurHash: k=9                                             2.14ns   467.71M
+MurmurHash: k=10                                            2.08ns   480.64M
+MurmurHash: k=11                                            2.32ns   431.27M
+MurmurHash: k=12                                            2.11ns   474.60M
+MurmurHash: k=13                                            2.14ns   466.30M
+MurmurHash: k=14                                            2.13ns   469.61M
+MurmurHash: k=15                                            2.25ns   444.42M
+MurmurHash: k=2^0                                           1.49ns   669.56M
+MurmurHash: k=2^1                                           1.50ns   666.43M
+MurmurHash: k=2^2                                           1.50ns   668.27M
+MurmurHash: k=2^3                                           1.79ns   559.17M
+MurmurHash: k=2^4                                           2.41ns   415.72M
+MurmurHash: k=2^5                                           3.84ns   260.43M
+MurmurHash: k=2^6                                           6.99ns   143.15M
+MurmurHash: k=2^7                                          12.08ns    82.79M
+MurmurHash: k=2^8                                          23.45ns    42.64M
+MurmurHash: k=2^9                                          49.96ns    20.01M
+MurmurHash: k=2^10                                        107.91ns     9.27M
+MurmurHash: k=2^11                                        218.65ns     4.57M
+MurmurHash: k=2^12                                        441.28ns     2.27M
+MurmurHash: k=2^13                                        886.75ns     1.13M
+MurmurHash: k=2^14                                          1.77us   564.30K
+MurmurHash: k=2^15                                          3.56us   280.85K
+----------------------------------------------------------------------------
+RapidHash: k=1                                              1.84ns   542.90M
+RapidHash: k=2                                              1.82ns   549.15M
+RapidHash: k=3                                              1.82ns   549.21M
+RapidHash: k=4                                              1.57ns   638.11M
+RapidHash: k=5                                              1.58ns   632.71M
+RapidHash: k=6                                              1.58ns   633.68M
+RapidHash: k=7                                              1.58ns   634.58M
+RapidHash: k=8                                              1.58ns   634.57M
+RapidHash: k=9                                              1.57ns   635.57M
+RapidHash: k=10                                             1.58ns   632.12M
+RapidHash: k=11                                             1.57ns   636.44M
+RapidHash: k=12                                             1.57ns   636.24M
+RapidHash: k=13                                             1.58ns   634.89M
+RapidHash: k=14                                             1.58ns   634.86M
+RapidHash: k=15                                             1.57ns   635.39M
+RapidHash: k=2^0                                            1.84ns   542.43M
+RapidHash: k=2^1                                            1.83ns   547.56M
+RapidHash: k=2^2                                            1.57ns   637.86M
+RapidHash: k=2^3                                            1.58ns   634.29M
+RapidHash: k=2^4                                            1.58ns   633.76M
+RapidHash: k=2^5                                            2.18ns   458.28M
+RapidHash: k=2^6                                            3.52ns   284.33M
+RapidHash: k=2^7                                            5.89ns   169.89M
+RapidHash: k=2^8                                            8.92ns   112.14M
+RapidHash: k=2^9                                           17.06ns    58.63M
+RapidHash: k=2^10                                          31.49ns    31.76M
+RapidHash: k=2^11                                          61.36ns    16.30M
+RapidHash: k=2^12                                         120.33ns     8.31M
+RapidHash: k=2^13                                         238.81ns     4.19M
+RapidHash: k=2^14                                         511.88ns     1.95M
+RapidHash: k=2^15                                         967.88ns     1.03M
 ----------------------------------------------------------------------------
 #endif

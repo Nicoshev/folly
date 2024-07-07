@@ -44,8 +44,7 @@
 #include <folly/Utility.h>
 #include <folly/functional/ApplyTuple.h>
 #include <folly/hash/MurmurHash.h>
-#include <folly/hash/SpookyHashV1.h>
-#include <folly/hash/SpookyHashV2.h>
+#include <folly/hash/rapidhash.h>
 #include <folly/lang/Bits.h>
 
 namespace folly {
@@ -702,7 +701,7 @@ struct hasher<std::string> {
 
   size_t operator()(const std::string& key) const {
     return static_cast<size_t>(
-        hash::SpookyHashV2::Hash64(key.data(), key.size(), 0));
+        hash::rapidhash(key.data(), key.size()));
   }
 };
 template <typename K>
@@ -714,7 +713,7 @@ struct hasher<std::string_view> {
 
   size_t operator()(const std::string_view& key) const {
     return static_cast<size_t>(
-        hash::SpookyHashV2::Hash64(key.data(), key.size(), 0));
+        hash::rapidhash(key.data(), key.size()));
   }
 };
 template <typename K>
